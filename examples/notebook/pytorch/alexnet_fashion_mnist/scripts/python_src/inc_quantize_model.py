@@ -1,8 +1,8 @@
 import neural_compressor as inc
-print("neural_compressor version {}".format(inc.__version__))
+print(f"neural_compressor version {inc.__version__}")
 
 import torch
-print("torch {}".format(torch.__version__))
+print(f"torch {torch.__version__}")
 
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion, TuningCriterion, Options
@@ -14,20 +14,14 @@ import alexnet
 
 def ver2int(ver):
     s_vers = ver.split(".")
-    res = 0
-    for i, s in enumerate(s_vers):
-        res += int(s)*(100**(2-i))
-
-    return res
+    return sum(int(s)*(100**(2-i)) for i, s in enumerate(s_vers))
 
 def compare_ver(src, dst):
     src_ver = ver2int(src)
     dst_ver = ver2int(dst)
     if src_ver>dst_ver:
         return 1
-    if src_ver<dst_ver:
-        return -1
-    return 0
+    return -1 if src_ver<dst_ver else 0
 
 def auto_tune(input_graph_path, batch_size):
     train_dataset, test_dataset = fashion_mnist.download_dataset()
@@ -43,20 +37,18 @@ def auto_tune(input_graph_path, batch_size):
       tolerable_loss=0.01  
       )
     )
-    q_model = fit(
+    return fit(
         model=model,
         conf=config,
         calib_dataloader=calib_dataloader,
-        eval_dataloader=eval_dataloader
-        )
-
-    return q_model
+        eval_dataloader=eval_dataloader,
+    )
 
 def main():
     batch_size = 200
     fp32_model_file = "../output/alexnet_mnist_fp32_mod.pth"
     int8_model = "../output/alexnet_mnist_int8_mod"
-    
+
     if compare_ver(inc.__version__, "2.0")>=0:
         print(f"Compatible Intel Neural Compressor version detected : v{inc.__version__} ")
     else:
@@ -64,7 +56,7 @@ def main():
 
     q_model = auto_tune(fp32_model_file, batch_size)
     q_model.save(int8_model)
-    print("Save int8 model to {}".format(int8_model))
+    print(f"Save int8 model to {int8_model}")
 
 if __name__ == "__main__":
     main()

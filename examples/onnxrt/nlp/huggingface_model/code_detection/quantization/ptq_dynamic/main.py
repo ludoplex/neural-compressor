@@ -102,10 +102,10 @@ def fine_tune(args):
 
     results = {"eval_acc": 0}
     global_step = -1
-    for epoch in range(3):
+    for _ in range(3):
         all_labels = []
         all_preds = []
-        for idx, batch in enumerate(train_loader):
+        for batch in train_loader:
             global_step += 1
             optim.zero_grad()
             labels = batch.pop("labels")
@@ -134,12 +134,12 @@ def fine_tune(args):
                     best_acc = results["eval_acc"]
                     print("  Best acc:%s", round(best_acc, 4))
                     checkpoint_prefix = "checkpoint-best-acc"
-                    output_dir = os.path.join("{}".format(checkpoint_prefix))
+                    output_dir = os.path.join(f"{checkpoint_prefix}")
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     model_to_save = model.module if hasattr(model, "module") else model
-                    model.config.to_json_file("{}/config.json".format(checkpoint_prefix))
-                    output_dir = os.path.join(output_dir, "{}".format("pytorch_model.bin"))
+                    model.config.to_json_file(f"{checkpoint_prefix}/config.json")
+                    output_dir = os.path.join(output_dir, 'pytorch_model.bin')
                     torch.save(model_to_save.state_dict(), output_dir)
                     print("Saving model checkpoint to %s", output_dir)
 
@@ -162,8 +162,7 @@ class ONNXRTDataset:
 
 def get_dataloader(ort_model_path, dataset):
     """Create INC ORT dataloader."""
-    dataloader = ONNXRTDataset(ort_model_path, dataset)
-    return dataloader
+    return ONNXRTDataset(ort_model_path, dataset)
 
 
 def main():
@@ -237,7 +236,7 @@ def main():
                 labels: List[np.array] = [labels]  # List[shape: bs]
             inputs = inputs[:len_inputs]
             for i in range(len_inputs):
-                ort_inputs.update({inputs_names[i]: inputs[i]})
+                ort_inputs[inputs_names[i]] = inputs[i]
             predictions: List[np.array] = session.run(
                 None, ort_inputs
             )  # List[# shape, (bs, 2)]
@@ -253,7 +252,7 @@ def main():
         correct_count = np.sum(label_flatten == preds_flatten)
         acc = correct_count / len(label_flatten)
         return acc
-    
+
     # tune
     if args.tune:
         from neural_compressor import PostTrainingQuantConfig, quantization

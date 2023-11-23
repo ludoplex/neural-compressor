@@ -58,14 +58,14 @@ def metric_max_over_ground_truths(prediction, ground_truths):
     return max(scores_for_ground_truths)
 
 def preprocess(text):
-   tokens = word_tokenize(text)
-   # split into lower-case word tokens, in numpy array with shape of (seq, 1)
-   words = np.asarray([w.lower() for w in tokens]).reshape(-1, 1)
-   # split words into chars, in numpy array with shape of (seq, 1, 1, 16)
-   chars = [[c for c in t][:16] for t in tokens]
-   chars = [cs+['']*(16-len(cs)) for cs in chars]
-   chars = np.asarray(chars).reshape(-1, 1, 1, 16)
-   return words, chars
+    tokens = word_tokenize(text)
+    # split into lower-case word tokens, in numpy array with shape of (seq, 1)
+    words = np.asarray([w.lower() for w in tokens]).reshape(-1, 1)
+       # split words into chars, in numpy array with shape of (seq, 1, 1, 16)
+    chars = [list(t)[:16] for t in tokens]
+    chars = [cs+['']*(16-len(cs)) for cs in chars]
+    chars = np.asarray(chars).reshape(-1, 1, 1, 16)
+    return words, chars
 
 class squadDataset():
     def __init__(self, datapath, batch_size):
@@ -73,7 +73,7 @@ class squadDataset():
         self.data = []
         with open(datapath, "r") as f:
             input_data = json.load(f)["data"]
-        for idx, entry in enumerate(input_data):
+        for entry in input_data:
             for paragraph in entry["paragraphs"]:
                 ct = paragraph["context"]
                 cw, cc = preprocess(ct)
@@ -82,8 +82,7 @@ class squadDataset():
                     self.data.append([[cw, cc, qw, qc], [cw, [i['text'] for i in qas['answers']]]])
                             
     def __iter__(self):
-        for data in self.data:
-            yield data
+        yield from self.data
 
     def __len__(self):
         return len(self.data)
@@ -166,24 +165,24 @@ if __name__ == "__main__":
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
         for idx, (inputs, labels) in tqdm.tqdm(enumerate(dataloader), desc='eval'):
-                if not isinstance(labels, list):
-                    labels = [labels]
-                if len_inputs == 1:
-                    ort_inputs.update(
-                        inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
-                    )
+            if not isinstance(labels, list):
+                labels = [labels]
+            if len_inputs == 1:
+                ort_inputs.update(
+                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                )
+            else:
+                assert len_inputs == len(inputs), 'number of input tensors must align with graph inputs'
+                if isinstance(inputs, dict):
+                    ort_inputs.update(inputs)
                 else:
-                    assert len_inputs == len(inputs), 'number of input tensors must align with graph inputs'
-                    if isinstance(inputs, dict):
-                        ort_inputs.update(inputs)
-                    else:
-                        for i in range(len_inputs):
-                            if not isinstance(inputs[i], np.ndarray):
-                                ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                            else:
-                                ort_inputs.update({inputs_names[i]: inputs[i]})
-                predictions = session.run(None, ort_inputs)
-                metric.update(predictions, labels)
+                    for i in range(len_inputs):
+                        if not isinstance(inputs[i], np.ndarray):
+                            ort_inputs[inputs_names[i]] = np.array(inputs[i])
+                        else:
+                            ort_inputs[inputs_names[i]] = inputs[i]
+            predictions = session.run(None, ort_inputs)
+            metric.update(predictions, labels)
         return metric.result()
  
     if args.benchmark:

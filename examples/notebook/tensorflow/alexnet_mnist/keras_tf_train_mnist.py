@@ -1,20 +1,21 @@
 """
 Intel Neural Compressor has old package names: iLiT and LPOT.
 """
+
 try:
     import neural_compressor as inc
-    print("neural_compressor version {}".format(inc.__version__))  
+    print(f"neural_compressor version {inc.__version__}")
 except:
     try:
         import lpot as inc
-        print("LPOT version {}".format(inc.__version__)) 
+        print(f"LPOT version {inc.__version__}")
     except:
         import ilit as inc
-        print("iLiT version {}".format(inc.__version__))       
+        print(f"iLiT version {inc.__version__}")       
 
 import os
 import tensorflow as tf
-print("Tensorflow version {}".format(tf.__version__))
+print(f"Tensorflow version {tf.__version__}")
 tf.compat.v1.enable_eager_execution()
 
 import matplotlib.pyplot as plt
@@ -25,7 +26,7 @@ Dataset
 Use MNIST dataset to recognize hand writing numbers. Load the dataset.
 """
 import alexnet
- 
+
 data = alexnet.read_data()
 x_train, y_train, label_train, x_test, y_test, label_test = data
 print('train', x_train.shape, y_train.shape, label_train.shape)

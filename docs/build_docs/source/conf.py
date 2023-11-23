@@ -15,7 +15,7 @@ release = version
 with open("version.txt", "w") as f:
     f.write(version)
 
-repo_url = "https://github.com/intel/neural-compressor/blob/v{}".format(version)
+repo_url = f"https://github.com/intel/neural-compressor/blob/v{version}"
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -70,7 +70,7 @@ templates_path = ["_templates"]
 
 
 def skip_util_classes(app, what, name, obj, skip, options):
-    if what == "property" or what == "method":
+    if what in ["property", "method"]:
         skip = True
     return skip
 
@@ -86,4 +86,4 @@ def linkcode_resolve(domain, info):
     if not info["module"]:
         return None
     filename = info["module"].replace(".", "/")
-    return "{}/{}.py".format(repo_url, filename)
+    return f"{repo_url}/{filename}.py"

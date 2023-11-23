@@ -73,7 +73,7 @@ def export_model(input_model, output_model):
 
     checkpoint = torch.load(MODEL_FILES[input_model], map_location='cpu')
     model.load_state_dict(checkpoint['model'])
-    print("Resume checkpoint %s" % MODEL_FILES[input_model])
+    print(f"Resume checkpoint {MODEL_FILES[input_model]}")
 
     model.eval()
     x = torch.randn(1, 3, 224, 224, requires_grad=True)
@@ -92,8 +92,9 @@ def export_model(input_model, output_model):
 
 
 def prepare_model(input_model, output_model):
-    is_download_successful = download_model(args.input_model, MAX_TIMES_RETRY_DOWNLOAD)
-    if is_download_successful:
+    if is_download_successful := download_model(
+        args.input_model, MAX_TIMES_RETRY_DOWNLOAD
+    ):
         export_model(input_model, output_model)
 
 

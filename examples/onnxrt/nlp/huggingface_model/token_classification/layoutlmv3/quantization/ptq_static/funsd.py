@@ -89,8 +89,7 @@ class Funsd(datasets.GeneratorBasedBuilder):
         x0, y0, x1, y1 = min(x), min(y), max(x), max(y)
 
         assert x1 >= x0 and y1 >= y0
-        bbox = [[x0, y0, x1, y1] for _ in range(len(bboxs))]
-        return bbox
+        return [[x0, y0, x1, y1] for _ in range(len(bboxs))]
 
     def _generate_examples(self, filepath):
         logger.info("⏳ Generating examples from = %s", filepath)
@@ -111,7 +110,7 @@ class Funsd(datasets.GeneratorBasedBuilder):
                 cur_line_bboxes = []
                 words, label = item["words"], item["label"]
                 words = [w for w in words if w["text"].strip() != ""]
-                if len(words) == 0:
+                if not words:
                     continue
                 if label == "other":
                     for w in words:
@@ -120,11 +119,11 @@ class Funsd(datasets.GeneratorBasedBuilder):
                         cur_line_bboxes.append(normalize_bbox(w["box"], size))
                 else:
                     tokens.append(words[0]["text"])
-                    ner_tags.append("B-" + label.upper())
+                    ner_tags.append(f"B-{label.upper()}")
                     cur_line_bboxes.append(normalize_bbox(words[0]["box"], size))
                     for w in words[1:]:
                         tokens.append(w["text"])
-                        ner_tags.append("I-" + label.upper())
+                        ner_tags.append(f"I-{label.upper()}")
                         cur_line_bboxes.append(normalize_bbox(w["box"], size))
                 # by default: --segment_level_layout 1
                 # if do not want to use segment_level_layout, comment the following line

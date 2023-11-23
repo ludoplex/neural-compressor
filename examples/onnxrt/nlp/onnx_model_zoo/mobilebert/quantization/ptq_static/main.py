@@ -23,17 +23,13 @@ def parse_dummy_input(model, benchmark_nums, max_seq_length):
     shapes = []
     lows = []
     highs = []
+    low = 0.0
     for i in range(len(session.get_inputs())):
         input_name = session.get_inputs()[i].name
         input_shapes = session.get_inputs()[i].shape
         shape = [benchmark_nums]
         shape.append(max_seq_length)
-        if input_name == "input_ids":
-            low = 0.0
-            high = 1000.0
-        else:
-            low = 0.0
-            high = 2.0
+        high = 1000.0 if input_name == "input_ids" else 2.0
         shapes.append(tuple(shape))
         lows.append(low)
         highs.append(high)
@@ -73,10 +69,10 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
         in_batch = result[0].shape[0]
         start_logits = [float(x) for x in result[1][0].flat]
         end_logits = [float(x) for x in result[0][0].flat]
-        for i in range(0, in_batch):
+        for _ in range(0, in_batch):
             unique_id = len(all_results)
             all_results.append(RawResult(unique_id=unique_id, start_logits=start_logits,end_logits=end_logits))
-    
+
     # postprocessing
     output_dir = './output'
     os.makedirs(output_dir, exist_ok=True)
@@ -90,9 +86,13 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
         dataset_json = json.load(dataset_file)
         expected_version = '1.1'
         if (dataset_json['version'] != expected_version):
-            print('Evaluation expects v-' + expected_version +
-                    ', but got dataset with v-' + dataset_json['version'],
-                    file=sys.stderr)
+            print(
+                (
+                    f'Evaluation expects v-{expected_version}, but got dataset with v-'
+                    + dataset_json['version']
+                ),
+                file=sys.stderr,
+            )
         dataset = dataset_json['data']
     with open(output_prediction_file) as prediction_file:
         predictions = json.load(prediction_file)

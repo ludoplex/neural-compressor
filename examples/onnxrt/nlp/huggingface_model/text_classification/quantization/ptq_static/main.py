@@ -83,16 +83,15 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
     # Load data features from cache or dataset file
     if not os.path.exists("./dataset_cached"):
         os.makedirs("./dataset_cached")
-    cached_features_file = os.path.join("./dataset_cached", 'cached_{}_{}_{}_{}'.format(
-        'dev' if evaluate else 'train',
-        list(filter(None, model_name_or_path.split('/'))).pop(),
-        str(max_seq_length),
-        str(task)))
+    cached_features_file = os.path.join(
+        "./dataset_cached",
+        f"cached_{'dev' if evaluate else 'train'}_{list(filter(None, model_name_or_path.split('/'))).pop()}_{str(max_seq_length)}_{str(task)}",
+    )
     if os.path.exists(cached_features_file):
-        logger.info("Load features from cached file {}.".format(cached_features_file))
+        logger.info(f"Load features from cached file {cached_features_file}.")
         features = torch.load(cached_features_file)
     else:
-        logger.info("Create features from dataset file at {}.".format(data_dir))
+        logger.info(f"Create features from dataset file at {data_dir}.")
         label_list = processor.get_labels()
         examples = processor.get_dev_examples(data_dir) if evaluate else \
             processor.get_train_examples(data_dir)
@@ -103,7 +102,7 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
                                                 max_length=max_seq_length,
                                                 output_mode=output_mode,
         )
-        logger.info("Save features into cached file {}.".format(cached_features_file))
+        logger.info(f"Save features into cached file {cached_features_file}.")
         torch.save(features, cached_features_file)
     # Convert to Tensors and build dataset
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
@@ -114,9 +113,13 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
         all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
     elif output_mode == "regression":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
-    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, \
-        all_seq_lengths, all_labels)
-    return dataset
+    return TensorDataset(
+        all_input_ids,
+        all_attention_mask,
+        all_token_type_ids,
+        all_seq_lengths,
+        all_labels,
+    )
 
 def convert_examples_to_features(
     examples,
@@ -132,7 +135,7 @@ def convert_examples_to_features(
     processor = transformers.glue_processors[task]()
     if label_list is None:
         label_list = processor.get_labels()
-        logger.info("Use label list {} for task {}.".format(label_list, task))
+        logger.info(f"Use label list {label_list} for task {task}.")
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
     for (ex_index, example) in enumerate(examples):
@@ -158,17 +161,15 @@ def convert_examples_to_features(
             ([0 if mask_padding_with_zero else 1] * padding_length)
         token_type_ids = token_type_ids + ([pad_token_segment_id] * padding_length)
 
-        assert len(input_ids) == max_length, \
-            "Error with input_ids length {} vs {}".format(
-            len(input_ids), max_length)
-        assert len(attention_mask) == max_length, \
-            "Error with attention_mask length {} vs {}".format(
-            len(attention_mask), max_length
-        )
-        assert len(token_type_ids) == max_length, \
-            "Error with token_type_ids length {} vs {}".format(
-            len(token_type_ids), max_length
-        )
+        assert (
+            len(input_ids) == max_length
+        ), f"Error with input_ids length {len(input_ids)} vs {max_length}"
+        assert (
+            len(attention_mask) == max_length
+        ), f"Error with attention_mask length {len(attention_mask)} vs {max_length}"
+        assert (
+            len(token_type_ids) == max_length
+        ), f"Error with token_type_ids length {len(token_type_ids)} vs {max_length}"
         if output_mode == "classification":
             label = label_map[example.label]
         elif output_mode == "regression":
@@ -369,7 +370,7 @@ if __name__ == "__main__":
                 labels = [labels]
             inputs = inputs[:len_inputs]
             for i in range(len_inputs):
-                ort_inputs.update({inputs_names[i]: inputs[i]})
+                ort_inputs[inputs_names[i]] = inputs[i]
             predictions = session.run(None, ort_inputs)
             metric.update(predictions[0], labels)
         return metric.result()

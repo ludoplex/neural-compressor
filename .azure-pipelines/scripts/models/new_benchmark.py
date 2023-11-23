@@ -54,10 +54,7 @@ def get_threads():
     p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p2 = subprocess.Popen(["grep", "processor"], stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
-    res = []
-    for line in iter(p3.stdout.readline, b""):
-        res.append(line.decode("utf-8").strip())
-    return res
+    return [line.decode("utf-8").strip() for line in iter(p3.stdout.readline, b"")]
 
 
 def get_physical_ids():
@@ -65,10 +62,7 @@ def get_physical_ids():
     p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p2 = subprocess.Popen(["grep", "physical id"], stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
-    res = []
-    for line in iter(p3.stdout.readline, b""):
-        res.append(line.decode("utf-8").strip())
-    return res
+    return [line.decode("utf-8").strip() for line in iter(p3.stdout.readline, b"")]
 
 
 def get_core_ids():
@@ -76,10 +70,7 @@ def get_core_ids():
     p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p2 = subprocess.Popen(["grep", "core id"], stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
-    res = []
-    for line in iter(p3.stdout.readline, b""):
-        res.append(line.decode("utf-8").strip())
-    return res
+    return [line.decode("utf-8").strip() for line in iter(p3.stdout.readline, b"")]
 
 
 def get_bounded_threads(core_ids, threads, sockets):
@@ -87,7 +78,7 @@ def get_bounded_threads(core_ids, threads, sockets):
     res = []
     existing_socket_core_list = []
     for idx, x in enumerate(core_ids):
-        socket_core = sockets[idx] + ":" + x
+        socket_core = f"{sockets[idx]}:{x}"
         if socket_core not in existing_socket_core_list:
             res.append(int(threads[idx]))
             existing_socket_core_list.append(socket_core)
@@ -115,8 +106,7 @@ def config_instance(cores_per_instance, num_of_instance):
         core[i] = [str(j) for j in core[i]]
         core[i] = ",".join(core[i])
 
-    core = ";".join(core)
-    return core
+    return ";".join(core)
 
 
 if __name__ == "__main__":

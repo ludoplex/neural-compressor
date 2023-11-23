@@ -198,8 +198,7 @@ class Dataloader:
 
         for batched_indices in batch_sampler():
             try:
-                data = fetcher(batched_indices)
-                yield data
+                yield fetcher(batched_indices)
             except StopIteration:
                 return
 

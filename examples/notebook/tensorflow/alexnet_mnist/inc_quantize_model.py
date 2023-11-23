@@ -5,11 +5,12 @@ Enable Intel Optimized TensorFlow 2.6.0 and newer by setting environment variabl
 That will accelerate training and inference, and  it's mandatory requirement of running Intel® Neural Compressor quantize Fp32 model or deploying the quantized model.
 """
 
+
 import neural_compressor as inc
-print("neural_compressor version {}".format(inc.__version__))
+print(f"neural_compressor version {inc.__version__}")
 
 import tensorflow as tf
-print("tensorflow {}".format(tf.__version__))
+print(f"tensorflow {tf.__version__}")
 
 from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion, TuningCriterion
 from neural_compressor.data import DataLoader
@@ -33,20 +34,14 @@ class Dataset(object):
 
 def ver2int(ver):
     s_vers = ver.split(".")
-    res = 0
-    for i, s in enumerate(s_vers):
-        res += int(s)*(100**(2-i))
-
-    return res
+    return sum(int(s)*(100**(2-i)) for i, s in enumerate(s_vers))
 
 def compare_ver(src, dst):
     src_ver = ver2int(src)
     dst_ver = ver2int(dst)
     if src_ver>dst_ver:
         return 1
-    if src_ver<dst_ver:
-        return -1
-    return 0
+    return -1 if src_ver<dst_ver else 0
 
 def auto_tune(input_graph_path, batch_size):
     dataset = Dataset()
@@ -58,14 +53,12 @@ def auto_tune(input_graph_path, batch_size):
                                          criterion='relative',  
                                          tolerable_loss=0.01  )
                                     )
-    q_model = fit(
+    return fit(
         model=input_graph_path,
         conf=config,
         calib_dataloader=dataloader,
-        eval_dataloader=dataloader)
-    
-
-    return q_model
+        eval_dataloader=dataloader,
+    )
 
 
 batch_size = 200

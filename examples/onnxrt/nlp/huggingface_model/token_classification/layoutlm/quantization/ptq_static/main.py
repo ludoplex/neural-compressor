@@ -174,8 +174,10 @@ def main():
 
     # Log on each process the small summary:
     logger.warning(
-        f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
+        (
+            f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
+            + f"distributed training: {training_args.local_rank != -1}, 16-bits training: {training_args.fp16}"
+        )
     )
     # Set the verbosity to info of the Transformers logger (on main process only):
     if is_main_process(training_args.local_rank):
@@ -207,8 +209,7 @@ def main():
         unique_labels = set()
         for label in labels:
             unique_labels = unique_labels | set(label)
-        label_list = list(unique_labels)
-        label_list.sort()
+        label_list = sorted(unique_labels)
         return label_list
 
     if isinstance(features[label_column_name].feature, ClassLabel):
@@ -242,7 +243,7 @@ def main():
     )
     model = AutoModelForTokenClassification.from_pretrained(
         model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+        from_tf=".ckpt" in model_args.model_name_or_path,
         config=config,
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
@@ -442,7 +443,7 @@ def main():
                 logger.warning("Model optimizer will be skipped. " \
                             "Try to upgrade onnxruntime to avoid this error")
                 onnx_model = onnx.load(model_args.input_model)
-            
+
             from neural_compressor import quantization, PostTrainingQuantConfig
             from neural_compressor.utils.constant import FP32
 

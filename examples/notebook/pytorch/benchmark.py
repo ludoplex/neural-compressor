@@ -54,8 +54,9 @@ def preprocess_function(examples):
     args = (
         (examples[sentence1_key], examples[sentence2_key])
     )
-    result = tokenizer(*args, padding=padding, max_length=max_seq_length, truncation=True)
-    return result
+    return tokenizer(
+        *args, padding=padding, max_length=max_seq_length, truncation=True
+    )
 
 raw_datasets = raw_datasets.map(preprocess_function, batched=True)
 eval_dataset = raw_datasets["validation"]

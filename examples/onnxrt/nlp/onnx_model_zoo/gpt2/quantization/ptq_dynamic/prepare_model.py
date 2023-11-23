@@ -51,7 +51,7 @@ def save_tensor_proto(file_path, name, data):
 
 
 def save_data(test_data_dir, prefix, names, data_list):
-    if isinstance(data_list, torch.autograd.Variable) or isinstance(data_list, torch.Tensor):
+    if isinstance(data_list, (torch.autograd.Variable, torch.Tensor)):
         data_list = [data_list]
     for i, d in enumerate(data_list):
         d = d.data.cpu().numpy()
@@ -73,17 +73,13 @@ def save_model(name, model, inputs, outputs, input_names=None, output_names=None
     outputs_flatten = flatten(outputs)
     outputs_flatten = update_flatten_list(outputs_flatten, [])
     if input_names is None:
-        input_names = []
-        for i, _ in enumerate(inputs_flatten):
-            input_names.append('input' + str(i+1))
+        input_names = [f'input{str(i + 1)}' for i, _ in enumerate(inputs_flatten)]
     else:
         np.testing.assert_equal(len(input_names), len(inputs_flatten),
                                 "Number of input names provided is not equal to the number of inputs.")
 
     if output_names is None:
-        output_names = []
-        for i, _ in enumerate(outputs_flatten):
-            output_names.append('output' + str(i+1))
+        output_names = [f'output{str(i + 1)}' for i, _ in enumerate(outputs_flatten)]
     else:
         np.testing.assert_equal(len(output_names), len(outputs_flatten),
                                 "Number of output names provided is not equal to the number of output.")
@@ -113,7 +109,10 @@ def inference(file, inputs, outputs):
     outputs_flatten = update_flatten_list(outputs_flatten, [])
 
     sess = onnxruntime.InferenceSession(file)
-    ort_inputs = dict((sess.get_inputs()[i].name, to_numpy(input)) for i, input in enumerate(inputs_flatten))
+    ort_inputs = {
+        sess.get_inputs()[i].name: to_numpy(input)
+        for i, input in enumerate(inputs_flatten)
+    }
     res = sess.run(None, ort_inputs)
 
     if outputs is not None:

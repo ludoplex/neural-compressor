@@ -31,17 +31,13 @@ def save_model(name, model, inputs, outputs, input_names=None, output_names=None
     outputs_flatten = flatten(outputs)
     outputs_flatten = update_flatten_list(outputs_flatten, [])
     if input_names is None:
-        input_names = []
-        for i, _ in enumerate(inputs_flatten):
-            input_names.append('input' + str(i+1))
+        input_names = [f'input{str(i + 1)}' for i, _ in enumerate(inputs_flatten)]
     else:
         np.testing.assert_equal(len(input_names), len(inputs_flatten),
                                 "Number of input names provided is not equal to the number of inputs.")
 
     if output_names is None:
-        output_names = []
-        for i, _ in enumerate(outputs_flatten):
-            output_names.append('output' + str(i+1))
+        output_names = [f'output{str(i + 1)}' for i, _ in enumerate(outputs_flatten)]
     else:
         np.testing.assert_equal(len(output_names), len(outputs_flatten),
                                 "Number of output names provided is not equal to the number of output.")

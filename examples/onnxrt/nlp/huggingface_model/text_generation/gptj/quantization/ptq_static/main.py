@@ -96,8 +96,7 @@ args = parser.parse_args()
 tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
 
 def tokenize_function(examples):
-    example = tokenizer(examples['text'])
-    return example
+    return tokenizer(examples['text'])
 
 def eval_func(onnx_model, dataloader, workspace, pad_max):
     options = ort.SessionOptions()
@@ -113,12 +112,12 @@ def eval_func(onnx_model, dataloader, workspace, pad_max):
 
     total, hit = 0, 0
     pad_len = 0
- 
-    for idx, (batch, last_ind) in enumerate(dataloader):
+
+    for batch, last_ind in dataloader:
         ort_inputs = dict(zip(inputs_names, batch))
         label = torch.from_numpy(batch[0][torch.arange(len(last_ind)), last_ind])
         pad_len = pad_max - last_ind - 1
-        
+
         predictions = session.run(None, ort_inputs)
         outputs = torch.from_numpy(predictions[0])
 
@@ -126,9 +125,8 @@ def eval_func(onnx_model, dataloader, workspace, pad_max):
         pred = last_token_logits.argmax(dim=-1)
         total += len(label)
         hit += (pred == label).sum().item()
-    
-    acc = hit / total
-    return acc
+
+    return hit / total
 
 class Dataloader:
     def __init__(self, pad_max=196, batch_size=1):
@@ -168,7 +166,7 @@ class Dataloader:
         try:
             for (input_ids, attention_mask), last_ind in self.dataloader:
                 data = [input_ids.detach().cpu().numpy().astype('int64')]
-                for i in range(28):
+                for _ in range(28):
                     data.append(np.zeros((input_ids.shape[0],16,1,256), dtype='float32'))
                     data.append(np.zeros((input_ids.shape[0],16,1,256), dtype='float32'))
                 data.append(attention_mask.detach().cpu().numpy().astype('int64'))

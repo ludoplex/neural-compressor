@@ -43,7 +43,7 @@ def shapes_to_tensor(x: List[int], device: Optional[torch.device] = None) -> tor
         return torch.as_tensor(x, device=device)
     if torch.jit.is_tracing():
         assert all(
-            [isinstance(t, torch.Tensor) for t in x]
+            isinstance(t, torch.Tensor) for t in x
         ), "Shape should be tensor during tracing!"
         # as_tensor should not be used in tracing because it records a constant
         ret = torch.stack(x)
@@ -122,7 +122,7 @@ class ImageList(object):
         Returns:
             an `ImageList`.
         """
-        assert len(tensors) > 0
+        assert tensors
         assert isinstance(tensors, (tuple, list))
         for t in tensors:
             assert isinstance(t, torch.Tensor), type(t)
@@ -147,9 +147,8 @@ class ImageList(object):
         # handle weirdness of scripting and tracing ...
         if torch.jit.is_scripting():
             max_size: List[int] = max_size.to(dtype=torch.long).tolist()
-        else:
-            if torch.jit.is_tracing():
-                image_sizes = image_sizes_tensor
+        elif torch.jit.is_tracing():
+            image_sizes = image_sizes_tensor
 
         if len(tensors) == 1:
             # This seems slightly (2%) faster.
@@ -246,9 +245,7 @@ def _apply_exif_orientation(image):
         8: Image.ROTATE_90,
     }.get(orientation)
 
-    if method is not None:
-        return image.transpose(method)
-    return image
+    return image.transpose(method) if method is not None else image
 
 def read_image(file_name, format=None):
     """

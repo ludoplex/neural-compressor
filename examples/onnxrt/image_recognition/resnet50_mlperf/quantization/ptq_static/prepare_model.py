@@ -81,11 +81,9 @@ def export_model(input_model, output_model):
 
 
 def prepare_model(input_model, output_model):
-    # Please refer to [MLPerf Inference Benchmarks for Image Classification and Object Detection Tasks]
-    # (https://github.com/mlcommons/inference/tree/master/vision/classification_and_detection#mlperf-inference-benchmarks-for-image-classification-and-object-detection-tasks)
-    # for model details.
-    is_download_successful = download_model(MODEL_URL, input_model, MAX_TIMES_RETRY_DOWNLOAD)
-    if is_download_successful:
+    if is_download_successful := download_model(
+        MODEL_URL, input_model, MAX_TIMES_RETRY_DOWNLOAD
+    ):
         export_model(input_model, output_model)
 
 

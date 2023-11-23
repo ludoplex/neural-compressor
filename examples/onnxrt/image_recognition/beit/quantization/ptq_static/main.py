@@ -24,25 +24,21 @@ def build_eval_transform(input_size=224, imagenet_default_mean_and_std=False, cr
     t = []
     if resize_im:
         if crop_pct is None:
-            if input_size < 384:
-                crop_pct = 224 / 256
-            else:
-                crop_pct = 1.0
+            crop_pct = 224 / 256 if input_size < 384 else 1.0
         size = int(input_size / crop_pct)
-        t.append(
-            transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
+        t.extend(
+            (
+                transforms.Resize(size, interpolation=3),
+                transforms.CenterCrop(input_size),
+            )
         )
-        t.append(transforms.CenterCrop(input_size))
-
-    t.append(transforms.ToTensor())
-    t.append(transforms.Normalize(mean, std))
+    t.extend((transforms.ToTensor(), transforms.Normalize(mean, std)))
     return transforms.Compose(t)
 
 def build_val_dataset(data_path):
     transform = build_eval_transform()
     root = os.path.join(data_path, 'val')
-    dataset = datasets.ImageFolder(root, transform=transform)
-    return dataset
+    return datasets.ImageFolder(root, transform=transform)
 
 
 def evaluate_func(data_loader, model):

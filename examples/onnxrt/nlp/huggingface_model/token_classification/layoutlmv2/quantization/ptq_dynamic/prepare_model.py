@@ -25,7 +25,7 @@ def get_dummy_input(model_name_or_path):
     green = np.random.randint(255, size=(width * height))
     blue = np.random.randint(255, size=(width * height))
 
-    pixels = [(r, g, b) for r, g, b in zip(red, green, blue)]
+    pixels = list(zip(red, green, blue))
 
     image.putdata(pixels)
 
@@ -34,8 +34,7 @@ def get_dummy_input(model_name_or_path):
     # dict_keys(['input_ids', 'token_type_ids', 'attention_mask', 'bbox', 'image'])
     for key, val in encoding.items():
         print(f"key: {key}; val: {val.shape}")
-    dummy_input = {}
-    dummy_input["input_ids"] = encoding["input_ids"].to(torch.int64)
+    dummy_input = {"input_ids": encoding["input_ids"].to(torch.int64)}
     dummy_input["attention_mask"] = encoding["attention_mask"].to(torch.int64)
     dummy_input["bbox"] = encoding["bbox"].to(torch.int64)
     dummy_input["image"] = encoding["image"].to(torch.int64)
