@@ -56,8 +56,10 @@ class TextDataset(Dataset):
         directory, filename = os.path.split(file_path)
         if not os.path.exists("./dataset_cached"):
             os.makedirs("./dataset_cached")
-        cached_features_file = os.path.join("./dataset_cached", 
-            args.model_name_or_path + '_cached_lm_' + str(block_size) + '_' + filename)
+        cached_features_file = os.path.join(
+            "./dataset_cached",
+            f'{args.model_name_or_path}_cached_lm_{str(block_size)}_{filename}',
+        )
 
         if os.path.exists(cached_features_file) and not args.overwrite_cache:
             logger.info("Loading features from cached file %s", cached_features_file)
@@ -72,8 +74,12 @@ class TextDataset(Dataset):
 
             tokenized_text = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
 
-            for i in range(0, len(tokenized_text)-block_size+1, block_size): # Truncate in block of block_size
-                self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i:i+block_size]))
+            self.examples.extend(
+                tokenizer.build_inputs_with_special_tokens(
+                    tokenized_text[i : i + block_size]
+                )
+                for i in range(0, len(tokenized_text) - block_size + 1, block_size)
+            )
             # Note that we are losing the last truncated example here for the sake of simplicity (no padding)
             # If your dataset is small, first you should loook for a bigger one :-) and second you
             # can change this behavior by adding (model specific) padding.
@@ -92,8 +98,9 @@ class TextDataset(Dataset):
         return inputs, inputs
 
 def load_and_cache_examples(args, tokenizer, evaluate=False):
-    dataset = TextDataset(tokenizer, args, file_path=args.data_path, block_size=args.block_size)
-    return dataset
+    return TextDataset(
+        tokenizer, args, file_path=args.data_path, block_size=args.block_size
+    )
 
 def evaluate(args, model, tokenizer, prefix=""):
     eval_dataset = load_and_cache_examples(args, tokenizer, evaluate=True)
@@ -102,7 +109,7 @@ def evaluate(args, model, tokenizer, prefix=""):
     eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
     # Eval!
-    logger.info("***** Running evaluation {} *****".format(prefix))
+    logger.info(f"***** Running evaluation {prefix} *****")
     logger.info("  Num examples = %d", len(eval_dataset))
     logger.info("  Batch size = %d", args.eval_batch_size)
     eval_loss = 0.0
@@ -125,7 +132,7 @@ def evaluate(args, model, tokenizer, prefix=""):
         labels = labels.to(args.device)
         for i in range(len_inputs):
             inputs = np.array(inputs)
-            ort_inputs.update({inputs_names[i]: inputs})
+            ort_inputs[inputs_names[i]] = inputs
         predictions = session.run(None, ort_inputs)
         lm_logits = predictions[0]
         lm_logits = torch.from_numpy(lm_logits)
@@ -136,7 +143,7 @@ def evaluate(args, model, tokenizer, prefix=""):
         loss_fct = CrossEntropyLoss(ignore_index=-1)
         lm_loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)),
                         shift_labels.view(-1))
-        
+
         if nb_eval_steps >= args.warmup_steps:
             total_time += (timeit.default_timer() - start)
         eval_loss += lm_loss.mean().item()
@@ -149,7 +156,7 @@ def evaluate(args, model, tokenizer, prefix=""):
         perf = (nb_eval_steps - args.warmup_steps) * args.eval_batch_size / total_time
         if args.eval_batch_size == 1:
             print('Latency: %.3f ms' % (total_time / (nb_eval_steps - args.warmup_steps) * 1000))
-        print("Throughput: {} samples/s".format(perf))
+        print(f"Throughput: {perf} samples/s")
     else:
         logger.info("*****no performance, please check dataset length and warmup number *****")
 
@@ -159,14 +166,14 @@ def evaluate(args, model, tokenizer, prefix=""):
     result = {
         "perplexity": perplexity
     }
-    logger.info("***** Eval results {} *****".format(prefix))
+    logger.info(f"***** Eval results {prefix} *****")
     for key in sorted(result.keys()):
         logger.info("  %s = %s", key, str(result[key]))
-    
+
     if args.benchmark and args.mode == "accuracy":
         print("Batch size = %d" % args.eval_batch_size)
         print("Accuracy: %.5f" % (result['perplexity'].item()))
-    
+
     return result['perplexity'].item()
 
 def main():

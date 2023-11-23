@@ -31,10 +31,10 @@ def main():
                     if "linux" in line:
                         line = line.replace("<url>", parse_tuning_log(line, url_dict))
                         tuning_info_content.append(line)
-    f = open(args.output_dir + "/summary.log", "a")
+    f = open(f"{args.output_dir}/summary.log", "a")
     for summary in summary_content:
         f.writelines(str(summary))
-    f2 = open(args.output_dir + "/tuning_info.log", "a")
+    f2 = open(f"{args.output_dir}/tuning_info.log", "a")
     for tuning_info in tuning_info_content:
         f2.writelines(str(tuning_info))
 

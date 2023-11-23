@@ -35,7 +35,7 @@ def update_yaml_dataset(yaml, framework, dataset_location):
 
     # Update dataset
     if framework != "pytorch":
-        val_txt_location = os.path.dirname(dataset_location) + f"{os.path.sep}" + "val.txt"
+        val_txt_location = f"{os.path.dirname(dataset_location)}{os.path.sep}val.txt"
 
         patterns = {
             "root_path": {
@@ -55,18 +55,9 @@ def update_yaml_dataset(yaml, framework, dataset_location):
                 "replacement": f"data_dir: {dataset_location}",
             },
         }
-        print("======= update_yaml_dataset =======")
-        with open(yaml, "w") as config:
-            for line in lines:
-                for key, key_patterns in patterns.items():
-                    if re.search(key_patterns["pattern"], line):
-                        print(f"Replacing {key} key.")
-                        line = re.sub(key_patterns["pattern"], key_patterns["replacement"], line)
-                config.write(line)
-
     else:
-        val_dataset = dataset_location + f"{os.path.sep}" + "val"
-        train_dataset = dataset_location + f"{os.path.sep}" + "train"
+        val_dataset = f"{dataset_location}{os.path.sep}val"
+        train_dataset = f"{dataset_location}{os.path.sep}train"
         patterns = {
             "calibration_dataset": {
                 "pattern": r"root:.*/path/to/calibration/dataset/?",
@@ -78,14 +69,14 @@ def update_yaml_dataset(yaml, framework, dataset_location):
             },
         }
 
-        print("======= update_yaml_dataset =======")
-        with open(yaml, "w") as config:
-            for line in lines:
-                for key, key_patterns in patterns.items():
-                    if re.search(key_patterns["pattern"], line):
-                        print(f"Replacing {key} key.")
-                        line = re.sub(key_patterns["pattern"], key_patterns["replacement"], line)
-                config.write(line)
+    print("======= update_yaml_dataset =======")
+    with open(yaml, "w") as config:
+        for line in lines:
+            for key, key_patterns in patterns.items():
+                if re.search(key_patterns["pattern"], line):
+                    print(f"Replacing {key} key.")
+                    line = re.sub(key_patterns["pattern"], key_patterns["replacement"], line)
+            config.write(line)
 
 
 def update_yaml_config_tuning(
@@ -151,21 +142,20 @@ def update_yaml_config_tuning(
     if max_trials and max_trials > 0:
         try:
             tuning_config = yaml_config.get("tuning", {})
-            prev_exit_policy = tuning_config.get("exit_policy", {})
-            if not prev_exit_policy:
-                tuning_config.update({"exit_policy": {"max_trials": max_trials}})
-            else:
+            if prev_exit_policy := tuning_config.get("exit_policy", {}):
                 prev_max_trials = prev_exit_policy.get("max_trials", None)
                 prev_exit_policy.update({"max_trials": max_trials})
                 print(f"Changed {prev_max_trials} to {max_trials}")
+            else:
+                tuning_config.update({"exit_policy": {"max_trials": max_trials}})
         except Exception as e:
             print(f"[ WARNING ] {e}")
 
     if mode == "accuracy":
         try:
-            # delete performance part in yaml if exist
-            performance = yaml_config.get("evaluation", {}).get("performance", {})
-            if performance:
+            if performance := yaml_config.get("evaluation", {}).get(
+                "performance", {}
+            ):
                 yaml_config.get("evaluation", {}).pop("performance", {})
             # accuracy batch_size replace
             if batch_size:
@@ -180,9 +170,9 @@ def update_yaml_config_tuning(
             print(f"[ WARNING ] {e}")
     elif mode:
         try:
-            # delete accuracy part in yaml if exist
-            accuracy = yaml_config.get("evaluation", {}).get("accuracy", {})
-            if accuracy:
+            if accuracy := yaml_config.get("evaluation", {}).get(
+                "accuracy", {}
+            ):
                 yaml_config.get("evaluation", {}).pop("accuracy", {})
             # performance iteration replace
             if iteration:
@@ -248,11 +238,9 @@ def update_yaml_config_benchmark_acc(yaml_path: str, batch_size=None):
         accuracy = yaml_config.get("evaluation", {}).get("accuracy", {})
         if not accuracy:
             raise AttributeError
-        dataloader = accuracy.get("dataloader", {})
-        if dataloader:
+        if dataloader := accuracy.get("dataloader", {}):
             dataloader.update({"batch_size": batch_size})
-        configs = accuracy.get("configs", {})
-        if configs:
+        if configs := accuracy.get("configs", {}):
             del accuracy["configs"]
     except Exception as e:
         print(f"[ WARNING ] {e}")
@@ -283,24 +271,21 @@ def update_yaml_config_benchmark_perf(yaml_path: str, batch_size=None, multi_ins
         performance = yaml_config.get("evaluation", {}).get("performance", {})
         if not performance:
             raise AttributeError
-        dataloader = performance.get("dataloader", {})
-        if dataloader:
+        if dataloader := performance.get("dataloader", {}):
             dataloader.update({"batch_size": batch_size})
         performance.update({"iteration": iters})
-        configs = performance.get("configs", {})
-        if not configs:
+        if not (configs := performance.get("configs", {})):
             raise AttributeError
-        else:
-            configs.update(
-                {
-                    "cores_per_instance": int(ncores_per_instance),
-                    "num_of_instance": int(ncores_per_socket // ncores_per_instance),
-                }
-            )
-            for attr in ["intra_num_of_threads", "inter_num_of_threads", "kmp_blocktime"]:
-                if configs.get(attr):
-                    del configs[attr]
-            print(configs)
+        configs.update(
+            {
+                "cores_per_instance": int(ncores_per_instance),
+                "num_of_instance": int(ncores_per_socket // ncores_per_instance),
+            }
+        )
+        for attr in ["intra_num_of_threads", "inter_num_of_threads", "kmp_blocktime"]:
+            if configs.get(attr):
+                del configs[attr]
+        print(configs)
     except Exception as e:
         print(f"[ WARNING ] {e}")
 
@@ -316,7 +301,7 @@ if __name__ == "__main__":
     args = parse_args()
     update_yaml_dataset(args.yaml, args.framework, args.dataset_location)
     update_yaml_config_tuning(args.yaml, strategy=args.strategy)
-    print("===== multi_instance={} ====".format(args.multi_instance))
+    print(f"===== multi_instance={args.multi_instance} ====")
     if args.new_benchmark == "true":
         update_yaml_config_benchmark_acc(args.yaml, batch_size=args.batch_size)
         update_yaml_config_benchmark_perf(args.yaml, batch_size=args.batch_size, multi_instance=args.multi_instance)

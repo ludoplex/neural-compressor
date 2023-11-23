@@ -246,8 +246,10 @@ def main():
 
     # Log on each process the small summary:
     logger.warning(
-        f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
+        (
+            f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
+            + f"distributed training: {training_args.local_rank != -1}, 16-bits training: {training_args.fp16}"
+        )
     )
     # Set the verbosity to info of the Transformers logger (on main process only):
     if is_main_process(training_args.local_rank):
@@ -284,8 +286,7 @@ def main():
         unique_labels = set()
         for label in labels:
             unique_labels = unique_labels | set(label)
-        label_list = list(unique_labels)
-        label_list.sort()
+        label_list = sorted(unique_labels)
         return label_list
 
     if isinstance(features[label_column_name].feature, ClassLabel):
@@ -480,7 +481,7 @@ def main():
                                    config,
                                    eval_func=eval_func)
         q_model.save(model_args.save_path)
-    
+
     if model_args.benchmark:
         onnx_model = onnx.load(model_args.input_model)
         if model_args.mode == 'performance':

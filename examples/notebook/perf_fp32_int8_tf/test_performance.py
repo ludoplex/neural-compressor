@@ -3,8 +3,8 @@
 #import needed packages
 
 import tensorflow as tf
-print("Tensorflow version {}".format(tf.__version__))
- 
+print(f"Tensorflow version {tf.__version__}")
+
 import numpy as np
 import time
 import argparse
@@ -25,18 +25,15 @@ def get_concrete_function(graph_def, inputs, outputs, print_graph=False):
 
 def save_res(result, dtype):
     throughput, latency = result
-    res = {}
-    res['throughput'] = throughput
-    res['latency'] = latency
-
-    outfile = (str)(dtype)+".json"
+    res = {'throughput': throughput, 'latency': latency}
+    outfile = f"{str(dtype)}.json"
     with open(outfile, 'w') as f:
         json.dump(res, f)
-        print("Save result to {}".format(outfile))
+        print(f"Save result to {outfile}")
 
 #run inference using the model and x_test, and return throughput and latency
 def run_infer(batchsize, dtype, x_test, model_file):
-    print("Running %s model..."%(dtype))
+    print(f"Running {dtype} model...")
 
     with tf.compat.v1.Session() as sess:
         print("load graph")
@@ -45,28 +42,28 @@ def run_infer(batchsize, dtype, x_test, model_file):
         graph_def.ParseFromString(f.read())
     sess.graph.as_default()
     tf.import_graph_def(graph_def, name='')
-    graph_nodes=[n for n in graph_def.node]
+    graph_nodes = list(graph_def.node)
     names = []
 
     with tf.Graph().as_default() as graph:
         for op in graph.get_operations():
-            print("Operation Name :" + op.name)
-            print("Tensor Stats :" + str(op.values()))
+            print(f"Operation Name :{op.name}")
+            print(f"Tensor Stats :{str(op.values())}")
 
     concrete_function = get_concrete_function(graph_def=graph_def,
                                                   inputs=["input:0"],
                                                   outputs=["predict:0"],
                                                   print_graph=True)
-    
+
     batches = x_test.reshape((x_test.shape[0]//batchsize,batchsize,224,224,3))
-    
+
     totaltime = 0
-    
+
     for batch in batches:
         bt = time.time()
         _frozen_graph_predictions = concrete_function(input=tf.constant(batch))
         et = time.time()
-    
+
         totaltime = totaltime + (et-bt)
 
     throughput = x_test.shape[0] / (et - bt)
@@ -102,7 +99,7 @@ def main(fp32_model, int8_model):
 
 if __name__ == "__main__":
     if len(sys.argv)<3:
-        print("Miss parameters!\n{} fp32_model int8_model".format(sys.argv[0]))
+        print(f"Miss parameters!\n{sys.argv[0]} fp32_model int8_model")
         sys.exit(1)
     fp32_model = sys.argv[1]
     int8_model = sys.argv[2]

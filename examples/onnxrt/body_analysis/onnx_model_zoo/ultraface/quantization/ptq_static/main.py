@@ -45,8 +45,7 @@ class Dataloader:
             
 
     def __iter__(self):
-        for item in self.data:
-            yield item
+        yield from self.data
 
 class Post:
     def __init__(self) -> None:
@@ -212,8 +211,7 @@ class AP:
         propose = pr_curve[:, 0]
         recall = pr_curve[:, 1]
 
-        ap = voc_ap(recall, propose)
-        return ap
+        return voc_ap(recall, propose)
 
 def norm_score(pred):
     """ norm score
@@ -351,9 +349,7 @@ def voc_ap(rec, prec):
     # where X axis (recall) changes value
     i = np.where(mrec[1:] != mrec[:-1])[0]
 
-    # and sum (\Delta recall) * prec
-    ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
-    return ap
+    return np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
 
 def eval_func(model, dataloader, metric, postprocess):
     metric.reset()

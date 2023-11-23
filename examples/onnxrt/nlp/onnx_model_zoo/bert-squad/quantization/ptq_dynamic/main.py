@@ -56,10 +56,10 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
         in_batch = result[0].shape[0]
         start_logits = [float(x) for x in result[1][0].flat]
         end_logits = [float(x) for x in result[2][0].flat]
-        for i in range(0, in_batch):
+        for _ in range(0, in_batch):
             unique_id = len(all_results)
             all_results.append(RawResult(unique_id=unique_id, start_logits=start_logits,end_logits=end_logits))
-    
+
     # postprocessing
     output_dir = './output'
     os.makedirs(output_dir, exist_ok=True)
@@ -73,9 +73,13 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
         dataset_json = json.load(dataset_file)
         expected_version = '1.1'
         if (dataset_json['version'] != expected_version):
-            print('Evaluation expects v-' + expected_version +
-                    ', but got dataset with v-' + dataset_json['version'],
-                    file=sys.stderr)
+            print(
+                (
+                    f'Evaluation expects v-{expected_version}, but got dataset with v-'
+                    + dataset_json['version']
+                ),
+                file=sys.stderr,
+            )
         dataset = dataset_json['data']
     with open(output_prediction_file) as prediction_file:
         predictions = json.load(prediction_file)

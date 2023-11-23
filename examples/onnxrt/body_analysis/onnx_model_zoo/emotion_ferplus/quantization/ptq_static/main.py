@@ -167,8 +167,7 @@ class Dataloader:
         self.data = [(self.preprocess(image), [label]) for image, label in zip(images, labels)]
 
     def __iter__(self):
-        for item in self.data:
-            yield item
+        yield from self.data
 
     def preprocess(self, image):
         input_shape = (1, 1, 64, 64)

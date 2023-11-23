@@ -41,19 +41,19 @@ class Net(nn.Module):
         return x
         
 def save_mod(model, model_file):
-    print('Save to {}'.format(model_file))
+    print(f'Save to {model_file}')
     torch.save(model.state_dict(), model_file)
 
 def load_mod(model_file):
-    model = Net()    
+    model = Net()
     model.load_state_dict(torch.load(model_file))
-    print('Load from {}'.format(model_file))
+    print(f'Load from {model_file}')
     return model
 
 def load_int8_mod(model_folder):
     model = Net()
-    int8_model = load(model_folder, model)    
-    print('Load from {}'.format(model_folder))
+    int8_model = load(model_folder, model)
+    print(f'Load from {model_folder}')
     return int8_model
     
 def data_loader(batch_size=200):

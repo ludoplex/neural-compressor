@@ -78,8 +78,9 @@ def export_model(input_model, output_model):
 
 
 def prepare_model(input_model, output_model):
-    is_download_successful = download_model(MODEL_URL, input_model, MAX_TIMES_RETRY_DOWNLOAD)
-    if is_download_successful:
+    if is_download_successful := download_model(
+        MODEL_URL, input_model, MAX_TIMES_RETRY_DOWNLOAD
+    ):
         export_model(input_model, output_model)
 
 

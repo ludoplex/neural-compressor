@@ -97,7 +97,7 @@ class Funsd(datasets.GeneratorBasedBuilder):
             for item in data["form"]:
                 words, label = item["words"], item["label"]
                 words = [w for w in words if w["text"].strip() != ""]
-                if len(words) == 0:
+                if not words:
                     continue
                 if label == "other":
                     for w in words:
@@ -106,11 +106,11 @@ class Funsd(datasets.GeneratorBasedBuilder):
                         bboxes.append(normalize_bbox(w["box"], size))
                 else:
                     tokens.append(words[0]["text"])
-                    ner_tags.append("B-" + label.upper())
+                    ner_tags.append(f"B-{label.upper()}")
                     bboxes.append(normalize_bbox(words[0]["box"], size))
                     for w in words[1:]:
                         tokens.append(w["text"])
-                        ner_tags.append("I-" + label.upper())
+                        ner_tags.append(f"I-{label.upper()}")
                         bboxes.append(normalize_bbox(w["box"], size))
 
             yield guid, {"id": str(guid), "tokens": tokens, "bboxes": bboxes, "ner_tags": ner_tags, "image": image}

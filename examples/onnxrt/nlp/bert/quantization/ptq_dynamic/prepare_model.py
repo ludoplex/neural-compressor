@@ -112,8 +112,9 @@ def export_model(model, output_model, max_len=128):
 
 
 def prepare_model(input_model, output_model, max_len):
-    is_download_successful = download_model(MODEL_URL, input_model, MAX_TIMES_RETRY_DOWNLOAD)
-    if is_download_successful:
+    if is_download_successful := download_model(
+        MODEL_URL, input_model, MAX_TIMES_RETRY_DOWNLOAD
+    ):
         folder_name = is_download_successful if isinstance(is_download_successful,
                                                            str) else "./MRPC"
         model = BertForSequenceClassification.from_pretrained(folder_name)

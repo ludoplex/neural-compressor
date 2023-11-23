@@ -122,8 +122,7 @@ args = parser.parse_args()
 tokenizer = LlamaTokenizer.from_pretrained(args.tokenizer)
 
 def tokenize_function(examples):
-    example = tokenizer(examples['text'])
-    return example
+    return tokenizer(examples['text'])
 
 def benchmark(model):
     import json
@@ -180,16 +179,18 @@ def benchmark(model):
 def eval_func(model):
     results = evaluate(
         model="hf-causal",
-        model_args='pretrained=' + model + ',tokenizer='+ args.tokenizer,
+        model_args=f'pretrained={model},tokenizer={args.tokenizer}',
         batch_size=args.batch_size,
         tasks=args.tasks,
-        model_format="onnx"
+        model_format="onnx",
     )
     for task_name in args.tasks:
         if task_name == "wikitext":
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]))
+            print(
+                f'Accuracy for {task_name} is: {results["results"][task_name]["word_perplexity"]}'
+            )
         else:
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]))
+            print(f'Accuracy for {task_name} is: {results["results"][task_name]["acc"]}')
 
 class KVDataloader:
     def __init__(self, model_path, pad_max=196, batch_size=1, sub_folder='train'):
@@ -236,11 +237,17 @@ class KVDataloader:
                 else:
                     outputs = self.sess.run(None, {'input_ids': input_ids[:, :-1].detach().cpu().numpy().astype('int64'),
                                                    'attention_mask':attention_mask[:, :-1].detach().cpu().numpy().astype('int64')})
-                    ort_input = {}
-                    ort_input['input_ids'] = input_ids[:, -1].unsqueeze(0).detach().cpu().numpy().astype('int64')
+                    ort_input = {
+                        'input_ids': input_ids[:, -1]
+                        .unsqueeze(0)
+                        .detach()
+                        .cpu()
+                        .numpy()
+                        .astype('int64')
+                    }
                     for i in range(int((len(outputs) - 1) / 2)):
-                        ort_input['past_key_values.{}.key'.format(i)] = outputs[i*2+1]
-                        ort_input['past_key_values.{}.value'.format(i)] = outputs[i*2+2]
+                        ort_input[f'past_key_values.{i}.key'] = outputs[i*2+1]
+                        ort_input[f'past_key_values.{i}.value'] = outputs[i*2+2]
                     ort_input['attention_mask'] =  np.zeros([self.batch_size, ort_input['past_key_values.0.key'].shape[2]+1], dtype='int64')
                     yield ort_input, last_ind.detach().cpu().numpy()
         except StopIteration:

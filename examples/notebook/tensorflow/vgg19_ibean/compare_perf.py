@@ -33,13 +33,12 @@ def format_print(name, values):
     name = fix_len(name, 16)
     a = fix_len(a, 24)
     b = fix_len(b, 24)
-        
-    print("{}{}{}".format(name, a, b))
+
+    print(f"{name}{a}{b}")
     
 def load_res(json_file):
     with open(json_file) as f:
-        data = json.load(f)
-        return data
+        return json.load(f)
 
 res_32 = load_res('32.json')
 res_8 = load_res('8.json')

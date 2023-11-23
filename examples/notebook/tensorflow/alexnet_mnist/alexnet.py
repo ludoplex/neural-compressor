@@ -15,13 +15,13 @@ import mnist_dataset
 
 
 def save_mod(model, mod_path):
-    print('Save to {}'.format(mod_path))
+    print(f'Save to {mod_path}')
     tf.saved_model.save(model, mod_path)
 
 
 def load_mod(model_file):
     model = tf.keras.models.load_model(model_file)
-    print('Load from {}'.format(model_file))
+    print(f'Load from {model_file}')
     return model
 
 def save_frozen_pb(model, mod_path):

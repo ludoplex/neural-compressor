@@ -1,6 +1,6 @@
 
 import tensorflow as tf
-print("Tensorflow version {}".format(tf.__version__))
+print(f"Tensorflow version {tf.__version__}")
 tf.config.run_functions_eagerly(False)
 
 import numpy as np
@@ -24,28 +24,23 @@ def scale(image, label):
 
 def val_data():
     datasets , info = tfds.load(name = 'beans', with_info = True, as_supervised = True, split = ['train'])
-    valdataset = [scale(v, l) for v,l in datasets[-1]]    
-    return valdataset
+    return [scale(v, l) for v,l in datasets[-1]]
 
 def load_raw_dataset():
     raw_datasets, _raw_info = tfds.load(name = 'beans', with_info = True, as_supervised = True, split = ['train'],
                                        batch_size=-1)
-    ds_numpy = tfds.as_numpy(raw_datasets)
-    return ds_numpy
+    return tfds.as_numpy(raw_datasets)
 
 def preprocss(dataset):
     [images, labels]= dataset
     inputs = []
-    res = []
     for image in images:        
         image = tf.convert_to_tensor(image, dtype=tf.float32)
         image /= 255.0
         image = tf.image.resize(image, [w, h])
         inputs.append(image)
-        
-    for label in labels:        
-        res.append(tf.one_hot(label, class_num))
-        
+
+    res = [tf.one_hot(label, class_num) for label in labels]
     return np.array(inputs), np.array(res)
         
 def load_dataset():
@@ -54,15 +49,9 @@ def load_dataset():
 def calc_accuracy(predictions, labels):  
     predictions = np.argmax(predictions.numpy(), axis=1)
     labels = np.argmax(labels, axis=1)
-    
-    same = 0
-    for i, x in enumerate(predictions):
-        if x == labels[i]:
-            same += 1
-    if len(predictions) == 0:
-        return 0
-    else:
-        return same / len(predictions)
+
+    same = sum(1 for i, x in enumerate(predictions) if x == labels[i])
+    return 0 if len(predictions) == 0 else same / len(predictions)
 
 def test_perf(pb_model_file, val_data):
     [x_test_np, label_test] = val_data
@@ -109,15 +98,11 @@ def test_perf(pb_model_file, val_data):
 
 def save_res(result):
     accuracy, throughput, latency = result
-    res = {}
-    res['accuracy'] = accuracy
-    res['throughput'] = throughput
-    res['latency'] = latency
-
-    outfile = args.index + ".json"
+    res = {'accuracy': accuracy, 'throughput': throughput, 'latency': latency}
+    outfile = f"{args.index}.json"
     with open(outfile, 'w') as f:
         json.dump(res, f)
-        print("Save result to {}".format(outfile))
+        print(f"Save result to {outfile}")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--index', type=str, help='file name of output', required=True)

@@ -9,10 +9,10 @@ import tensorflow_hub as hub
 import tensorflow_datasets as tfds
 
 import neural_compressor as inc
-print("neural_compressor version {}".format(inc.__version__))
+print(f"neural_compressor version {inc.__version__}")
 
 import tensorflow as tf
-print("tensorflow {}".format(tf.__version__))
+print(f"tensorflow {tf.__version__}")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -66,7 +66,7 @@ def train_model(model, epochs=1):
     
 def save_model(model, model_path):    
     model.save(model_path)
-    print("Save model to {}".format(model_path))
+    print(f"Save model to {model_path}")
     
 
 

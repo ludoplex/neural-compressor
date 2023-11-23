@@ -5,11 +5,12 @@ Enable Intel® oneDNN Optimizations in TensorFlow 2.6.0 and newer by setting env
 That will accelerate training and inference, and  it's mandatory requirement of running Intel® Neural Compressor quantize Fp32 model or deploying the quantized model.
 """
 
+
 import neural_compressor as inc
-print("neural_compressor version {}".format(inc.__version__))
+print(f"neural_compressor version {inc.__version__}")
 
 import tensorflow as tf
-print("tensorflow {}".format(tf.__version__))
+print(f"tensorflow {tf.__version__}")
 
 
 
@@ -60,7 +61,7 @@ class Dataset(object):
 def auto_tune(input_graph_path, batch_size, int8_pb_file):
     dataset = Dataset()
     dataloader = DataLoader(framework='tensorflow', dataset=dataset, batch_size = batch_size)
-    
+
     #Define accuracy criteria and tolerable loss
     config = PostTrainingQuantConfig(
     accuracy_criterion = AccuracyCriterion(
@@ -69,14 +70,12 @@ def auto_tune(input_graph_path, batch_size, int8_pb_file):
       tolerable_loss=0.01  
       )
     )
-    q_model = fit(
+    return fit(
         model=input_graph_path,
         conf=config,
         calib_dataloader=dataloader,
-        eval_dataloader=dataloader
-        )
-
-    return q_model
+        eval_dataloader=dataloader,
+    )
 
 
 batch_size =32
@@ -84,4 +83,4 @@ model_fp32_path="model_keras.fp32"
 int8_pb_file = "model_pb.int8"
 q_model = auto_tune(model_fp32_path,  batch_size, int8_pb_file)
 q_model.save(int8_pb_file)
-print("Save quantized model to {}".format(int8_pb_file))
+print(f"Save quantized model to {int8_pb_file}")

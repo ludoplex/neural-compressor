@@ -145,8 +145,7 @@ class Dataloader:
                 self.data.append((input_tensor, output_tensor))
 
     def __iter__(self):
-        for data in self.data:
-            yield data
+        yield from self.data
 
     def getImgIdsUnion(self, gt, catIds):
         """
@@ -169,16 +168,11 @@ def iou(model_tensor, target_tensor):
     # Don't include the background when summing
     model_tensor = model_tensor[:, 1:, :, :]
     target_tensor = target_tensor[:, 1:, :, :]
-    
+
     intersection = np.sum(np.logical_and(model_tensor, target_tensor))
     union = np.sum(np.logical_or(model_tensor, target_tensor))
-    
-    if union == 0:
-        # Can only happen if nothing was there and nothing was predicted,
-        # which is a perfect score
-        return 1
-    else:
-        return intersection / union
+
+    return 1 if union == 0 else intersection / union
 
 def evaluate(model, dataloader):    
     totalIoU = 0

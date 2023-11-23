@@ -86,10 +86,7 @@ class ResNet50(object):
         channel_in = input_shape[-1]
         channel_out = output_shape[-1]
 
-        if channel_in != channel_out:
-            return self._projection(x, channel_out)
-        else:
-            return x
+        return self._projection(x, channel_out) if channel_in != channel_out else x
 
     def _projection(self, x, channel_out):
         return Conv2D(channel_out, kernel_size=(1, 1), padding='same')(x)

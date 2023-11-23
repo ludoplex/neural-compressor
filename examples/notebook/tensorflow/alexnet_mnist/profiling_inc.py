@@ -1,6 +1,6 @@
 
 import tensorflow as tf
-print("Tensorflow version {}".format(tf.__version__))
+print(f"Tensorflow version {tf.__version__}")
 
 import numpy as np
 import time
@@ -20,14 +20,8 @@ def val_data():
 
 def calc_accuracy(predictions, labels):
     predictions = np.argmax(predictions, axis=1)
-    same = 0
-    for i, x in enumerate(predictions):
-        if x == labels[i]:
-            same += 1
-    if len(predictions) == 0:
-        return 0
-    else:
-        return same / len(predictions)
+    same = sum(1 for i, x in enumerate(predictions) if x == labels[i])
+    return 0 if len(predictions) == 0 else same / len(predictions)
 
 
 def get_concrete_function(graph_def, inputs, outputs, print_graph=False):
@@ -79,15 +73,11 @@ def infer_perf_pb(pb_model_file, val_data, inputs=["x:0"], outputs=["Identity:0"
 
 def save_res(result):
     accuracy, throughput, latency = result
-    res = {}
-    res['accuracy'] = accuracy
-    res['throughput'] = throughput
-    res['latency'] = latency
-
-    outfile = args.index + ".json"
+    res = {'accuracy': accuracy, 'throughput': throughput, 'latency': latency}
+    outfile = f"{args.index}.json"
     with open(outfile, 'w') as f:
         json.dump(res, f)
-        print("Save result to {}".format(outfile))
+        print(f"Save result to {outfile}")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--index', type=str, help='file name of output', required=True)

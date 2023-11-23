@@ -131,9 +131,7 @@ def check_integrity(fpath, md5):
     """Check MD5 checksum."""
     if not os.path.isfile(fpath):
         return False
-    if md5 is None:
-        return True
-    return md5 == calculate_md5(fpath)
+    return True if md5 is None else md5 == calculate_md5(fpath)
 
 
 def calculate_md5(fpath, chunk_size=1024*1024):
@@ -144,7 +142,7 @@ def calculate_md5(fpath, chunk_size=1024*1024):
             md5.update(chunk)
     return md5.hexdigest()
 
-def download_url(url, root, filename=None, md5=None):  # pragma: no cover
+def download_url(url, root, filename=None, md5=None):    # pragma: no cover
     """Download from url.
     Args:
         url (str): the address to download from.
@@ -161,25 +159,25 @@ def download_url(url, root, filename=None, md5=None):  # pragma: no cover
     os.makedirs(root, exist_ok=True)
 
     if check_integrity(fpath, md5):
-        print('Using downloaded and verified file: ' + fpath)
+        print(f'Using downloaded and verified file: {fpath}')
     else:
         try:
-            print('Downloading ' + url + ' to ' + fpath)
+            print(f'Downloading {url} to {fpath}')
             urllib.request.urlretrieve(
                 url, fpath,
                 reporthook=gen_bar_updater()
             )
         except (urllib.error.URLError, IOError) as e:
-            if url[:5] == 'https':
-                url = url.replace('https:', 'http:')
-                print('Failed download. Trying https -> http instead.'
-                      ' Downloading ' + url + ' to ' + fpath)
-                urllib.request.urlretrieve(
-                    url, fpath,
-                    reporthook=gen_bar_updater()
-                )
-            else:
+            if url[:5] != 'https':
                 raise e
+            url = url.replace('https:', 'http:')
+            print(
+                f'Failed download. Trying https -> http instead. Downloading {url} to {fpath}'
+            )
+            urllib.request.urlretrieve(
+                url, fpath,
+                reporthook=gen_bar_updater()
+            )
         if not check_integrity(fpath, md5):
             raise RuntimeError("File not found or corrupted.")
 
@@ -267,8 +265,7 @@ class Dataloader:
 
         for batched_indices in batch_sampler():
             try:
-                data = fetcher(batched_indices)
-                yield data
+                yield fetcher(batched_indices)
             except StopIteration:
                 return
 

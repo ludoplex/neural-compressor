@@ -7,7 +7,6 @@ class Dataset(object):
                     test_labels) = keras.datasets.fashion_mnist.load_data()
         self.test_images = test_images.astype(np.float32) / 255.0
         self.labels = test_labels
-        pass
 
     def __getitem__(self, index):
         return self.test_images[index], self.labels[index]
@@ -22,19 +21,16 @@ class MyMetric(BaseMetric):
         self.pred_list = []
         self.label_list = []
         self.samples = 0
-        pass
 
     def update(self, predict, label):
         self.pred_list.extend(np.argmax(predict, axis=1))
         self.label_list.extend(label)
-        self.samples += len(label) 
-        pass
+        self.samples += len(label)
 
     def reset(self):
         self.pred_list = []
         self.label_list = []
         self.samples = 0
-        pass
 
     def result(self):
         correct_num = np.sum(
